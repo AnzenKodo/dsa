@@ -13,9 +13,6 @@
  *   - https://en.wikipedia.org/wiki/NIST_hash_function_competition#cite_note-71
 ********************************************************************************/
 
-#ifndef LIBS_HASH
-#define LIBS_HASH
-
 #include <stddef.h>
 #include <assert.h>
 
@@ -185,5 +182,3 @@ long unsigned int hash_int_wang64shift(long unsigned int key) {
   key = key + (key << 31);
   return key;
 }
-
-#endif // LIBS_HASH
