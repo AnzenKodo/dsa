@@ -1,3 +1,9 @@
+/********************************************************************************
+ * Todo:
+    - https://pkg.odin-lang.org/core/hash/
+    - https://pkg.odin-lang.org/core/hash/xxhash/
+********************************************************************************/
+
 #include <stddef.h>
 #include <assert.h>
 
