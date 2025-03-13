@@ -1,0 +1,3 @@
+[submodule "ccore"]
+	path = ccore
+	url = git@github.com:AnzenKodo/ccore.git
