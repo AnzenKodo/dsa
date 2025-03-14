@@ -34,7 +34,6 @@ fn U64 hash_djb2(const unsigned char *data, size_t len) {
 }
 
 fn U64 hash_block(const Block *block) {
-    // char buffer[1024];
     U8 *buffer = arena_push(arena, U8, 1024);
     U8 *buff_pos = buffer;
 
