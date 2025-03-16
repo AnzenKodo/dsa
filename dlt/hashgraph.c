@@ -2,6 +2,8 @@
 // - https://www.youtube.com/watch?v=wgwYU1Zr9Tg
 // - https://www.hashgraph.com/wp-content/uploads/2024/09/SWIRLDS-TR-2016-01.pdf
 
+#define LOG_LEVEL LogLevel_Debug
+
 #include "ccore/base/base_include.h"
 #include "ccore/platform/platform_include.h"
 
@@ -12,7 +14,8 @@
 #define MAX_BLOCKS 100
 
 typedef struct Event Event;
-struct Event {
+struct Event
+{
     char *sig;
     time_t timestamp;
     char payload[100];
@@ -21,7 +24,9 @@ struct Event {
 };
 
 typedef struct Node Node;
-struct Node {
+struct Node
+{
+    char *name;
     char *pub_key;
     Event events[10];
     int events_count;
@@ -29,14 +34,16 @@ struct Node {
 };
 
 typedef struct Hashgraph Hashgraph;
-struct Hashgraph {
+struct Hashgraph
+{
     Node nodes[10];
     U32 nodes_count;
 };
 
 global Arena *arena = 0;
 
-fn U64 hash_djb2(const U8 *data, size_t len, U64 seed) {
+fn U64 hash_djb2(const U8 *data, size_t len, U64 seed)
+{
     U64 hash = seed > 0 ? seed : 5381;
     for (size_t i = 0; i < len; i++) {
         int c = data[i];
@@ -45,7 +52,9 @@ fn U64 hash_djb2(const U8 *data, size_t len, U64 seed) {
     return hash;
 }
 
-void add_event(Node* node, const U8 *payload, char* other_parent) {
+void add_event(Node* node, const U8 *payload, char* other_parent)
+{
+    log_debug_printf("- Added Event '%s' to Node '%s'\n", payload, node->name);
     Event *event = &node->events[node->events_count];
     event->timestamp = os_now_unix();
     MemCopy(event->payload, payload, 100);
@@ -66,10 +75,12 @@ void add_event(Node* node, const U8 *payload, char* other_parent) {
     node->events_count++;
 }
 
-fn Node* create_node(Hashgraph *hashgraph, Str8 name)
+fn Node* create_node(Hashgraph *hashgraph, Str8 name, Str8 pub_key)
 {
+    log_debug_printf("Created node: %s\n", name.str);
     Node* node = &hashgraph->nodes[hashgraph->nodes_count];
-    MemCopy(&node->pub_key, &name.str, name.size + 1);
+    MemCopy(&node->name, &name.str, name.size + 1);
+    MemCopy(&node->pub_key, &pub_key.str, pub_key.size + 1);
     MemZeroArray(node->events);
     add_event(node, "Genesises Event", NULL);
     node->next = NULL;
@@ -77,7 +88,8 @@ fn Node* create_node(Hashgraph *hashgraph, Str8 name)
     return node;
 }
 
-void gossip(Node* from_node, Node* to_node) {
+void gossip(Node* from_node, Node* to_node)
+{
     if (from_node->events_count == 0) return;
 
     U64 other_hash = 0;
@@ -87,7 +99,7 @@ void gossip(Node* from_node, Node* to_node) {
     }
     add_event(to_node, "Received gossip", (U8*)other_hash);
 
-    fmt_printf("%s gossiped to %s\n", from_node->pub_key, to_node->pub_key);
+    fmt_printf("%s gossiped to %s\n", from_node->name, to_node->name);
 }
 
 int main(void)
@@ -98,21 +110,22 @@ int main(void)
 
     Hashgraph hashgraph = ZERO_STRUCT;
 
-    Node *node1 = create_node(&hashgraph, str8_lit("Node 1"));
-    Node *node2 = create_node(&hashgraph, str8_lit("Node 2"));
+    Node *node1 = create_node(&hashgraph, str8_lit("Node 1"), str8_lit("1234567890"));
+    Node *node2 = create_node(&hashgraph, str8_lit("Node 2"), str8_lit("1234234344"));
 
-    add_event(node1, "hello", NULL);
-    add_event(node1, "hello2", NULL);
-    // add_event(node2, "hello 2", NULL, NULL);
+    add_event(node1, "Data 1", NULL);
+    add_event(node1, "Data 2", NULL);
     gossip(node1, node2);
-    add_event(node1, "hello", NULL);
-    gossip(node1, node2);
+    add_event(node2, "hello 2", NULL);
+    gossip(node2, node1);
 
     fmt_printf("\n");
-    for (U32 i = 0; i < hashgraph.nodes_count; i++) {
+    for (U32 i = 0; i < hashgraph.nodes_count; i++)
+    {
         Node node = hashgraph.nodes[i];
-        fmt_printf("%s\n", node.pub_key);
-        for (U32 i = 0; i < node.events_count; i++) {
+        fmt_printf("%s\n", node.name);
+        for (U32 i = 0; i < node.events_count; i++)
+        {
             Event *event = &node.events[i];
             char *head_symbol = "┣";
             char *child_symbol = "┃";
