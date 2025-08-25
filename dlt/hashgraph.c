@@ -10,9 +10,6 @@
 #include "ccore/base/base_include.c"
 #include "ccore/platform/platform_include.c"
 
-#define HASH_STR_LEN 100
-#define MAX_BLOCKS 100
-
 typedef struct Event Event;
 struct Event
 {
@@ -88,7 +85,7 @@ fn Node* create_node(Hashgraph *hashgraph, Str8 name, Str8 pub_key)
     return node;
 }
 
-void gossip(Node* from_node, Node* to_node)
+void node_gossip(Node* from_node, Node* to_node)
 {
     if (from_node->events_count == 0) return;
 
@@ -99,7 +96,7 @@ void gossip(Node* from_node, Node* to_node)
     }
     add_event(to_node, "Received gossip", (U8*)other_hash);
 
-    fmt_printf("%s gossiped to %s\n", from_node->name, to_node->name);
+    fmt_printf("+ %s gossiped to %s\n", from_node->name, to_node->name);
 }
 
 int main(void)
@@ -115,9 +112,9 @@ int main(void)
 
     add_event(node1, "Data 1", NULL);
     add_event(node1, "Data 2", NULL);
-    gossip(node1, node2);
+    node_gossip(node1, node2);
     add_event(node2, "hello 2", NULL);
-    gossip(node2, node1);
+    node_gossip(node2, node1);
 
     fmt_printf("\n");
     for (U32 i = 0; i < hashgraph.nodes_count; i++)
